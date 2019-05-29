@@ -48,17 +48,26 @@ def home():
 def interest_over_time_data(inputValue):
     """Return interest_over_time data for the keywords"""
 
-    print(f"The input is:{inputValue}");
+    print(f"The input is:{inputValue}")
 
     # Create payload and capture API tokens. 
     # Only needed for interest_over_time(), 
     # interest_by_region() & related_queries()
-    pytrend.build_payload(inputValue)
+
+    keywords = inputValue
+
+    keywords = keywords.split(sep=',')
+
+    pytrend.build_payload(kw_list=keywords)
 
     # # Interest Over Time
     interest_over_time_df = pytrend.interest_over_time()
 
+    interest_over_time_df.reset_index(inplace=True)
+
     print(interest_over_time_df.head())
+
+    interest_over_time_df = interest_over_time_df.to_dict()
 
     return jsonify(interest_over_time_df)
 
