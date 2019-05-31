@@ -1,3 +1,19 @@
+// Create color palette array
+var colors = ['#FF33E3', '#FFB533', '#33FF4F', '#FF4F33', '#B533FF'];
+
+// Create function to pull data
+async function live_trends(inputValue){ 
+
+    // Retrieve data
+    const live_trends_url = `/live_trends/${inputValue}`
+    const live_trends_data = await d3.json(live_trends_url);
+
+    // Print data
+    console.log('return from py:',live_trends_data);
+
+    return(live_trends_data)
+}
+
 // Select the submit button
 var submit = d3.select("#submit");
 
@@ -15,156 +31,95 @@ submit.on("click", function() {
     console.log(inputValue);
 
     live_trends_data = live_trends(inputValue)
-})
-    
-async function live_trends(inputValue){ 
+});
 
-    // Retrieve data
-    const live_trends_url = `/live_trends/${inputValue}`
-    const live_trends_data = await d3.json(live_trends_url);
-
-    // Print data
-    console.log('return from py:',live_trends_data);
-
-    return(live_trends_data)
-}
-
-(async function(){
-
-    // Define SVG area dimensions
-    const
-        svgWidth = 960,
-        svgHeight = 500;
-
-    // Define the chart's margins as an object
-    const margin = {
-        top: 60,
-        right: 60,
-        bottom: 60,
-        left: 60
-    };
-
-    // Define dimensions of the chart area
-    const chartWidth = svgWidth - margin.left - margin.right;
-    const chartHeight = svgHeight - margin.top - margin.bottom;
-
-    // Select body, append SVG area to it, and set its dimensions
-    const svg = d3.select("#time")
-    .append("svg")
-    .attr("width", svgWidth)
-    .attr("height", svgHeight);
-
-    // Append a group area, then set its margins
-    const chartGroup = svg.append("g")
-    .attr("transform", `translate(${margin.left}, ${margin.top})`);
+// Create function to call upon page load
+(async function init(){
 
     // Retrieve data
     const time_data_url = '/init'
     const time_data = await d3.json(time_data_url);
-    console.log(time_data.date);
 
     // Create a function to parse date and time
     const parseTime = d3.timeParse("%Y-%m-%d");
 
-    // Format date data
-    time_data.date.forEach(function(data) {
-        data = parseTime(data);
-        console.log(data);
-    });
-    console.log(time_data.date);
+    // Format date data and log data
+    var i;
+    for (i = 0; i < time_data.date.length; i++) {
+        time_data.date[i] = parseTime(time_data.date[i]);
+    }
+    console.log(time_data);
 
-    // // Reformat data
-    // Object.keys(time_data).forEach(function (key) {
-    //     time_data[key] = Object.values(time_data[key])
-    // });
+    // Create inerest-over-time graph
+    (function time_series(){
+        let taco_trace = {
+            type: "scatter",
+            mode: "lines",
+            name: 'Tacos',
+            y: time_data.taco,
+            x: time_data.date,
+            line: {color: colors[0]}
+        }
 
-    // // Cast values to numbers
-    // time_data.forEach(function(data) {
-        
-    //     data.tacos = +data.tacos;
-    //     data.sandwiches = +data.sandwiches;
-    //     data.kebabs = +data.kebabs;
-        
-    // });
+        let sandwich_trace = {
+            type: "scatter",
+            mode: "lines",
+            name: 'Sandwiches',
+            y: time_data.sandwich,
+            x: time_data.date,
+            line: {color: colors[1]}
+        }
 
-    // // Create the scales
-    // const xTimeScale = d3.scaleTime()
-    //     .domain(d3.extent(time_data.date))
-    //     .range([0, chartWidth]);
+        let kebab_trace = {
+            type: "scatter",
+            mode: "lines",
+            name: 'Kebabs',
+            y: time_data.kebab,
+            x: time_data.date,
+            line: {color: colors[2]}
+        }
 
-    // const yLinearScale = d3.scaleLinear()
-    //     .range([chartHeight, 0]);
+        let data = [taco_trace, sandwich_trace, kebab_trace];
 
-    // Configure a line function which will plot the x and y coordinates using our scales
-    // const drawLine = d3.line()
-    //     .x(data => xTimeScale(time_data.date))
-    //     .y(data => yLinearScale(time_data.taco));
+        let layout = {
+            showlegend: false,
+            autosize: true,
+            height: 600,
+            margin: {l: 25},
+            yaxis: {
+                range: [0, 100],
+                showticklabels: true,
+            }
+        };
 
-    // // Find max of data
-    // const tacoMax = d3.max(time_data.taco);
+        Plotly.newPlot('time', data, layout);
+    })();
 
-    // const sandwichMax = d3.max(time_data.sandwich);
+    // Create average-interest graph
+    (function avg_plot(){
+        let data = [
+            {
+                x: ["Tacos", "Sandwiches", "Kebabs"],
+                y: [d3.mean(time_data.taco),
+                    d3.mean(time_data.sandwich),
+                    d3.mean(time_data.kebab)],
+                marker:{
+                    color: [colors[0], colors[1], colors[2]]
+                },
+                type: "bar"
+            }
+        ];
 
-    // const kebabMax = d3.max(time_data.kebab);;
+        let layout = {
+            height: 600,
+            margin: {r: 0},
+            yaxis: {
+                showgrid: true,
+                showticklabels: false,
+                range: [0, 100]
+            }
+        };
 
-    // let yMax;
-    // if ((tacoMax > sandwichMax) && (tacoMax > kebabMax)) {
-    //     yMax = tacoMax;
-    // }
-    // else if ((sandwichMax > tacoMax) && (sandwichMax > kebabMax)) {
-    //     yMax = sandwichMax;
-    // }
-    // else {
-    //     yMax = kebabMax;
-    // }
-
-    // // Use the yMax value to set the yLinearScale domain
-    // yLinearScale.domain([0, yMax]);
-
-    // // Create the axes
-    // const bottomAxis = d3.axisBottom(xTimeScale).tickFormat(d3.timeFormat("%Y-%m-%d"));
-    // const leftAxis = d3.axisLeft(yLinearScale);
-
-    // // Add x-axis
-    // chartGroup.append("g")
-    //     .attr("transform", `translate(0, ${chartHeight})`)
-    //     .call(bottomAxis);
-
-    // // Add y-axis
-    // chartGroup.append("g").call(leftAxis);
-
-//     // Line generator for taco data
-//     const tacoLine = d3.line()
-//         .x(d => xTimeScale(d.date))
-//         .y(d => yLinearScale(d.tacos));
-
-//     // Line generator for sandwich data
-//     const sandwichLine = d3.line()
-//         .x(d => xTimeScale(d.date))
-//         .y(d => yLinearScale(d.sandwiches));
-
-//     // Line generator for kebab data
-//     const kebabLine = d3.line()
-//         .x(d => xTimeScale(d.date))
-//         .y(d => yLinearScale(d.kebabs));
-
-//     // Append a path for tacoLine
-//     chartGroup
-//         .append("path")
-//         .attr("d", tacoLine(time_data))
-//         .classed("line green", true);
-
-//     // Append a path for sandwhichLine
-//     chartGroup
-//         .data([time_data])
-//         .append("path")
-//         .attr("d", sandwichLine)
-//         .classed("line orange", true);
-
-//     // Append a path for sandwhichLine
-//     chartGroup
-//         .data([time_data])
-//         .append("path")
-//         .attr("d", kebabLine)
-//         .classed("red", true);
+        Plotly.newPlot('avg', data, layout);
+    })();
 })()
