@@ -4,8 +4,8 @@ function createMap(trends_object) {
     // Set the longitude, latitude, and the starting zoom level
     const myMap = L.map("map").setView([30.269782, -97.739777], 2);
 
-//     // Add a tile layer (the background map image) to our map
-//     // Use the addTo method to add objects to our map
+    // Add a tile layer (the background map image) to our map
+    // Use the addTo method to add objects to our map
     baseMap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
         attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
         maxZoom: 18,
@@ -15,21 +15,20 @@ function createMap(trends_object) {
 
     // Create an overlayMaps object to hold the keywords layer
     keywords = []
-    non_keywords = ['', 'geoName', 'country', 'latitude', 'longitude']
+    non_keywords = ['', 'index','geoName', 'country', 'latitude', 'longitude']
     for (key in trends_object[0]){
         if(!non_keywords.includes(key)){
             keywords.push(key)
         }
     }
-    console.log(keywords)
 
     var overlayMaps = {}
     keywords.forEach(function(k,i) {
         overlayMaps[k.toUpperCase()] = createLayer(trends_object, k, i)
     })
      
-    // Create a layer control, pass in the baseMaps and overlayMaps. Add the layer control to the map
     L.control.layers(overlayMaps).addTo(myMap);
+
 }
 
 const   colors = [  "#1f78b4",  "#33a02c",
@@ -49,7 +48,6 @@ function createLayer(valuesList, key, index) {
         const popupMsg = "<h3>" + feature['geoName'] + "</h3><hr>" + 
                             "<p>"  + magnitude + "</p><hr>" +
                             "<p>"  + feature['country']  + "</p>";
-        console.log(magnitude, coord, popupMsg)
         const dot = L.circle(coord, {
             color: colors[index], 
             fillColor: colors[index % 11],
@@ -66,9 +64,7 @@ function createLayer(valuesList, key, index) {
 
 
 (async function(){
-
-    const data = await d3.csv("../static/csv/interest_by_region_loc_df.csv").catch(error => console.warn(error));    
- 
+    const data = await d3.json("/region")
     createMap(data)
 })()
 

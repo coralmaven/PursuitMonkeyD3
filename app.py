@@ -13,6 +13,7 @@ from sqlalchemy import create_engine
 from flask_sqlalchemy import SQLAlchemy
 from flask import (
     Flask,
+    session,
     render_template,
     jsonify)
 
@@ -20,12 +21,16 @@ from flask import (
 # Flask Setup
 #################################################
 app = Flask(__name__)
+app.config['SESSION_TYPE'] = 'memcached'
+app.config['SECRET_KEY'] = 'super secret key'
 
 # Login to Google. 
 # Only need to run this once,
 # The rest of requests will use the same session.
 
 pytrend = TrendReq()
+countries_df = pd.read_csv("static/csv/countries.csv")
+
 
 #################################################
 # Database Setup
@@ -41,8 +46,8 @@ Base = automap_base()
 Base.prepare(db.engine, reflect=True)
 
 # Save references to each table
-initRegion = Base.classes.region
 initTime = Base.classes.time
+initRegion = Base.classes.region
 
 #################################################
 # Flask Routes
@@ -68,7 +73,7 @@ def init():
 
     # region_stmt = db.session.query(initRegion).statement
     # region_df = pd.read_sql_query(region_stmt, db.session.bind)
-    # region_dict = region_df.to_dict()
+    session['keywords'] = ['taco','sandwich','kebab']
 
     # Results
     return jsonify(time_data)
@@ -78,31 +83,43 @@ def init():
 def interest_over_time_data(inputValue):
     """Return live_trends data for the keywords"""
 
+    # Pytrends API pull
     keywords = inputValue
-
     keywords = keywords.split(sep=',')
-
     pytrend.build_payload(kw_list=keywords)
+    time_df = pytrend.interest_over_time()
+    time_df.reset_index(inplace=True)
+    time_data = {"date": time_df.date.tolist()}
+    for phrase in keywords:
+        time_data[phrase] = time_df[phrase].values.tolist()
 
-    # Interest over time
-    interest_over_time_df = pytrend.interest_over_time()
+    session['keywords'] = keywords
 
-    # Interest by region
-    interest_by_region_df = pytrend.interest_by_region()
+    return jsonify(time_data)
 
-    # Fix dataframes
-    interest_by_region_df.reset_index(inplace=True)
-    interest_over_time_df.reset_index(inplace=True)
+@app.route("/region")
+def interest_by_region_data():
+    keywords =  session.get('keywords', None)
+    pytrend.build_payload(kw_list=keywords)
+        # Interest By region
+    region_df = pytrend.interest_by_region()
+    region_df['total'] = region_df.sum(axis=1)
+    region_filtered_df = region_df[region_df['total']>0]
+    region_loc_df = pd.merge(region_filtered_df, countries_df, how="inner", left_on="geoName", right_on="name")
+    region_loc_df = region_loc_df.drop(columns=['name','total'])
+    region_loc_df.reset_index(inplace=True)
+    region_loc_data = []
+    for index, row in region_loc_df.iterrows():
+        region_loc_data.append(
+            row.to_dict()
+        )
+    return jsonify(region_loc_data)
 
-    # DataFrame to Dictionary
-    interest_by_region_df = interest_by_region_df.to_dict()
-    interest_over_time_df = interest_over_time_df.to_dict()
+@app.route("/viewMap")
+def view_map():
+    return render_template("viewMap.html")
 
-    # Results
-    return jsonify({
-        "interest_over_time": interest_over_time_df,
-        "interest_by_region": interest_by_region_df
-    })
 
 if __name__ == "__main__":
     app.run(debug=True)
+
