@@ -71,9 +71,7 @@ def init():
         "kebab": time_df.kebabs.values.tolist()
     }
 
-    # region_stmt = db.session.query(initRegion).statement
-    # region_df = pd.read_sql_query(region_stmt, db.session.bind)
-    session['keywords'] = ['taco','sandwich','kebab']
+    session['keywords'] = ['tacos','sandwiches','kebabs']
 
     # Results
     return jsonify(time_data)
