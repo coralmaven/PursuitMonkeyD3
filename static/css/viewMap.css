@@ -28,49 +28,6 @@ body {
   padding-bottom: 80px;
 }
 
-#newsroom {
-  z-index: -2;
-  stroke: #BF0A30;
-  opacity: 0.1;
-  border-radius: 8px;
-}
-
-.newspaper {
-  font: 50px Helvetica Neue;
-  fill: #002868;
-  opacity: 1;
-  text-anchor: middle;
-}
-
-.chart::before {
-  z-index: -1;
-  display: block;
-  width: 960px;
-  height: 400px;
-  content: " ";
-  opacity: 0.3;
-  position: absolute;
-}
-
-.tooltip {
-  position: absolute;
-  width: 135px;
-  height: 60px;
-  font: 12px Helvetica Neue;
-  padding: 1px;
-  padding-top: 4px;
-  color: white;
-  text-align: center;
-  background: #BF0A30;
-  opacity: 0.75;
-  border: 0;
-  border-radius: 10px;
-}
-
-.axis-text {
-  font: 20px Helvetica Neue;
-  fill: #002868;
-}
 
 .active {
   font-weight: bold;
@@ -86,19 +43,6 @@ body {
   fill: #BF0A30;
   cursor: pointer;
 }
-
-.state-circles {
-  fill: #002868;
-  stroke: #BF0A30;
-  opacity: 1;
-}
-
-.state-abbr {
-  fill: white;
-  font: 20px Myriad Pro;
-  text-anchor: middle;
-}
-
 
 
 #footer {

@@ -104,7 +104,6 @@ def interest_by_region_data():
     region_df['total'] = region_df.sum(axis=1)
     region_filtered_df = region_df[region_df['total']>0]
     region_loc_df = pd.merge(region_filtered_df, countries_df, how="inner", left_on="geoName", right_on="name")
-    region_loc_df = region_loc_df.drop(columns=['name','total'])
     region_loc_df.reset_index(inplace=True)
     region_loc_data = []
     for index, row in region_loc_df.iterrows():
